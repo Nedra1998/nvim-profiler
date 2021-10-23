@@ -260,25 +260,28 @@ def fmt_tree(total: SourcedStats, stats: List[SourcedStats]):
     tree = Tree(gen_node(root, root))
 
     def walk_tree(tree: Tree, key: str):
-        console.print(key)
         valid = [x[len(key) :].split("/") for x in paths if x.startswith(key)]
         visited = set()
         for p in valid:
-            if len(p) == 1:
+            if p[0] in visited:
+                continue
+            elif len(p) == 1:
                 tree.add(gen_node(p[0], key + p[0], key))
+                visited.add(p[0])
             else:
-                pref = commonprefix([x for x in paths if x.startswith(key + p[0])])
-                if pref in paths and pref not in visited:
-                    visited.add(pref)
-                    tree.add(gen_node(pref[len(key) :], pref, key))
+                visited.add(p[0])
+                pref = commonprefix([x for x in valid if x[0] == p[0]])
+                if pref in valid:
+                    tree.add(gen_node("/".join(pref), key + "/".join(pref), key))
                 else:
-                    if pref[-1] != "/":
-                        pref = "/".join(pref.split("/")[:-1]) + "/"
-                        if not p[0] in pref:
-                            pref += p[0] + '/'
-                    if pref not in visited:
-                        visited.add(pref)
-                        walk_tree(tree.add(gen_node(pref[len(key) :], pref, key)), pref)
+                    walk_tree(
+                        tree.add(
+                            gen_node(
+                                "/".join(pref) + "/", key + "/".join(pref) + "/", key
+                            )
+                        ),
+                        key + "/".join(pref) + "/",
+                    )
 
     walk_tree(tree, "/")
 
