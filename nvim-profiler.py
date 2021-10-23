@@ -33,6 +33,7 @@ logging.basicConfig(
 )
 log = logging.getLogger()
 
+__APPIMAGE_TMPDIR__ = re.compile(r"^/tmp/\.mount_nvim[0-9a-zA-Z]{6}/")
 __STEP_REGEX__ = re.compile(r"^(\d+\.\d+)\s+(\d+\.\d+): (.+)$")
 __SOURCING_REGEX__ = re.compile(
     r"^(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+): sourcing (.+)$"
@@ -78,10 +79,13 @@ class StartupTimes(object):
             match = __SOURCING_REGEX__.match(line)
             if match is not None:
                 total = max(float(match[1]), total)
-                if match[4] in files.keys():
-                    files[match[4]].append(float(match[3]))
+                file = match[4]
+                if __APPIMAGE_TMPDIR__.match(file):
+                    file = file[22:]
+                if file in files.keys():
+                    files[file].append(float(match[3]))
                 else:
-                    files[match[4]] = [float(match[3])]
+                    files[file] = [float(match[3])]
         self.raw.append(StartupTimeSample(total, files))
 
     def append(self, sample: Optional[StartupTimeSample] = None):
